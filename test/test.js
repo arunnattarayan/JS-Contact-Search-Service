@@ -195,6 +195,36 @@ describe('Contact Service', () => {
                 expect(service.search('First Last').length).to.equal(1); // first + last
                 expect(service.search('Joey Last').length).to.equal(1); // nick + last
                 expect(service.search('Firsty').length).to.equal(0);
+                
+
+            });
+            /** 
+             * Cached the result data on every request based on search query to minimize the execution time
+             * The Cache was cleared on time of update action
+             * */ 
+            it('should be deleted cache data once udpate happened', async () => { 
+                const contact = createContact({ firstName: 'First', lastName: 'Last', nickName: 'Joey', primaryPhoneNumber: '314-555-0000' });
+                
+                await flush();
+
+                expect(service.search('First Last').length).to.equal(1); 
+                expect(service.store.getCache('First Last').length).to.equal(1);
+                changeContact(contact, { firstName: 'Changed' });
+                expect(service.store.getCache('First Last').length).to.equal(0);
+            });
+            /** 
+             * When give invalid input search method should throw error
+             */
+            it('should be throw error when passing invlaid search query', async () => {
+                const contact = createContact({ firstName: 'First', lastName: 'Last', nickName: 'Joey', primaryPhoneNumber: '314-555-0000' });
+                
+                await flush();
+
+                expect(service.search.bind(service, '')).to.throw('The Search Query is not valid.'); // for invalid string
+                expect(service.search.bind(service, [])).to.throw('The Search Query is not valid.'); // for Invalid datatype
+                expect(service.search.bind(service, {})).to.throw('The Search Query is not valid.'); // for Invalid datatype
+                expect(service.search.bind(service, null)).to.throw('The Search Query is not valid.'); // for Invalid datatype
+                expect(service.search.bind(service, undefined)).to.throw('The Search Query is not valid.'); // for Invalid datatype
             });
         });
     });
